@@ -9,6 +9,7 @@ import {
 import { Player } from 'discord-player';
 import { commands } from './commands/index.js';
 import { loadConfig } from './config.js';
+import { startHealthServer } from './health-server.js';
 import { createLogger } from './logger.js';
 import { registerCommands } from './register-commands.js';
 import { COLORS, baseEmbed, replyPrivate } from './utils/discord.js';
@@ -18,6 +19,10 @@ async function main() {
   const logger = createLogger(config.logLevel);
   const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
+  });
+  const healthServer = startHealthServer({
+    isReady: () => client.isReady(),
+    logger,
   });
   const player = new Player(client);
   const commandMap = new Collection(commands.map((command) => [command.data.name, command]));
@@ -34,7 +39,7 @@ async function main() {
     const channel = queue.metadata?.channel;
     if (!channel?.isTextBased()) return;
 
-    const embed = baseEmbed('🎶 Sekarang Diputar', COLORS.success)
+    const embed = baseEmbed('ðŸŽ¶ Sekarang Diputar', COLORS.success)
       .setDescription(`[${track.title}](${track.url})`)
       .addFields(
         { name: 'Artis', value: track.author || 'Tidak diketahui', inline: true },
@@ -57,7 +62,7 @@ async function main() {
 
   client.once(Events.ClientReady, (readyClient) => {
     logger.info('Bot siap', { user: readyClient.user.tag, guilds: readyClient.guilds.cache.size });
-    readyClient.user.setActivity('/bantuan • Musik & Moderasi');
+    readyClient.user.setActivity('/bantuan â€¢ Musik & Moderasi');
   });
 
   client.on(Events.InteractionCreate, async (interaction) => {
@@ -83,6 +88,7 @@ async function main() {
     logger.info('Bot dimatikan', { signal });
     for (const queue of player.nodes.cache.values()) queue.delete();
     client.destroy();
+    await new Promise((resolve) => healthServer.close(resolve));
     process.exit(0);
   };
 
@@ -97,3 +103,4 @@ main().catch((error) => {
   console.error(JSON.stringify({ time: new Date().toISOString(), level: 'error', message: error.stack || error.message }));
   process.exit(1);
 });
+
