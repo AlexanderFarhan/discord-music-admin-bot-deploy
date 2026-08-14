@@ -7,6 +7,7 @@ import {
   VimeoExtractor,
 } from '@discord-player/extractor';
 import { Player } from 'discord-player';
+import ffmpegPath from 'ffmpeg-static';
 import { commands } from './commands/index.js';
 import { loadConfig } from './config.js';
 import { startHealthServer } from './health-server.js';
@@ -24,7 +25,7 @@ async function main() {
     isReady: () => client.isReady(),
     logger,
   });
-  const player = new Player(client);
+  const player = new Player(client, { ffmpegPath });
   const commandMap = new Collection(commands.map((command) => [command.data.name, command]));
 
   await player.extractors.loadMulti([
@@ -36,6 +37,11 @@ async function main() {
   ]);
 
   player.events.on('playerStart', async (queue, track) => {
+    logger.info('Pemutaran musik dimulai', {
+      guildId: queue.guild.id,
+      track: track.title,
+      source: track.source,
+    });
     const channel = queue.metadata?.channel;
     if (!channel?.isTextBased()) return;
 
