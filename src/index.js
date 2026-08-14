@@ -1,4 +1,5 @@
 import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
+import { setDefaultResultOrder } from 'node:dns';
 import {
   AppleMusicExtractor,
   ReverbnationExtractor,
@@ -14,6 +15,17 @@ import { startHealthServer } from './health-server.js';
 import { createLogger } from './logger.js';
 import { registerCommands } from './register-commands.js';
 import { COLORS, baseEmbed, replyPrivate } from './utils/discord.js';
+
+setDefaultResultOrder('ipv4first');
+
+function withTimeout(promise, timeoutMs, message) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), timeoutMs);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
 
 async function main() {
   const config = loadConfig();
@@ -101,8 +113,23 @@ async function main() {
   process.once('SIGINT', () => void shutdown('SIGINT'));
   process.once('SIGTERM', () => void shutdown('SIGTERM'));
 
-  await registerCommands(commands, config, logger);
-  await client.login(config.token);
+  logger.info('Mendaftarkan slash command Discord');
+  try {
+    await withTimeout(
+      registerCommands(commands, config, logger),
+      20_000,
+      'Pendaftaran slash command melewati batas waktu 20 detik',
+    );
+  } catch (error) {
+    logger.warn('Pendaftaran slash command dilewati sementara', { error: error.message });
+  }
+
+  logger.info('Menghubungkan bot ke Discord');
+  await withTimeout(
+    client.login(config.token),
+    30_000,
+    'Koneksi bot ke Discord melewati batas waktu 30 detik',
+  );
 }
 
 main().catch((error) => {
