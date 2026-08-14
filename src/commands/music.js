@@ -48,7 +48,7 @@ export function playableQuery(input) {
 
 function trackLine(track, index) {
   const duration = track.live ? 'LIVE' : track.duration;
-  return `**${index}.** [${track.title}](${track.url}) • ${duration}`;
+  return `**${index}.** [${track.title}](${track.url}) â€¢ ${duration}`;
 }
 
 export const musicCommand = {
@@ -104,7 +104,7 @@ export const musicCommand = {
           nodeOptions: {
             metadata: { channel: interaction.channel },
             volume: config.defaultVolume,
-            bufferingTimeout: 15_000,
+            bufferingTimeout: 60_000,
             leaveOnStop: true,
             leaveOnStopCooldown: 5_000,
             leaveOnEnd: true,
@@ -116,7 +116,7 @@ export const musicCommand = {
         });
 
         result.queue.setMetadata({ channel: interaction.channel });
-        return interaction.editReply(`🎵 **${result.track.title}** ditambahkan ke antrean.`);
+        return interaction.editReply(`ðŸŽµ **${result.track.title}** ditambahkan ke antrean.`);
       } catch (error) {
         return interaction.editReply(
           `Tidak dapat memutar permintaan itu. Pastikan judul atau tautannya valid dan sumbernya didukung.\nDetail: ${error.message}`,
@@ -131,35 +131,35 @@ export const musicCommand = {
     if (action === 'jeda') {
       if (queue.node.isPaused()) return replyPrivate(interaction, 'Musik sudah dijeda.');
       queue.node.pause();
-      return interaction.reply('⏸️ Musik dijeda.');
+      return interaction.reply('â¸ï¸ Musik dijeda.');
     }
 
     if (action === 'lanjut') {
       if (!queue.node.isPaused()) return replyPrivate(interaction, 'Musik tidak sedang dijeda.');
       queue.node.resume();
-      return interaction.reply('▶️ Musik dilanjutkan.');
+      return interaction.reply('â–¶ï¸ Musik dilanjutkan.');
     }
 
     if (action === 'lewati') {
       const skipped = queue.currentTrack;
       queue.node.skip();
-      return interaction.reply(`⏭️ **${skipped.title}** dilewati.`);
+      return interaction.reply(`â­ï¸ **${skipped.title}** dilewati.`);
     }
 
     if (action === 'berhenti') {
       queue.delete();
-      return interaction.reply('⏹️ Musik dihentikan dan antrean dikosongkan.');
+      return interaction.reply('â¹ï¸ Musik dihentikan dan antrean dikosongkan.');
     }
 
     if (action === 'volume') {
       const volume = interaction.options.getInteger('persen', true);
       queue.node.setVolume(volume);
-      return interaction.reply(`🔊 Volume diatur ke **${volume}%**.`);
+      return interaction.reply(`ðŸ”Š Volume diatur ke **${volume}%**.`);
     }
 
     if (action === 'sekarang') {
       const track = queue.currentTrack;
-      const progress = queue.node.createProgressBar() || 'Memuat progres…';
+      const progress = queue.node.createProgressBar() || 'Memuat progresâ€¦';
       const embed = new EmbedBuilder()
         .setColor(COLORS.primary)
         .setTitle('Sedang Diputar')
@@ -186,9 +186,10 @@ export const musicCommand = {
 
     const embed = new EmbedBuilder()
       .setColor(COLORS.primary)
-      .setTitle(`Antrean Musik • ${queue.size} berikutnya`)
+      .setTitle(`Antrean Musik â€¢ ${queue.size} berikutnya`)
       .setDescription(description)
       .setFooter({ text: upcoming.length < queue.size ? `Menampilkan 10 dari ${queue.size} lagu` : 'Semua lagu ditampilkan' });
     return interaction.reply({ embeds: [embed] });
   },
 };
+
